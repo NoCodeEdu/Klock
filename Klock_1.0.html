@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosk Clock</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+
+        .clock-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .time {
+            font-size: 8rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .date {
+            font-size: 2.5rem;
+            font-weight: 300;
+            opacity: 0.9;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .wake-lock-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .wake-lock-status.active {
+            background: rgba(0, 200, 0, 0.3);
+        }
+
+        .wake-lock-status.inactive {
+            background: rgba(200, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <div class="time" id="time">00:00:00</div>
+        <div class="date" id="date">Loading...</div>
+    </div>
+    
+    <div class="wake-lock-status" id="wakeLockStatus">Wake Lock: Initializing...</div>
+
+    <script>
+        let wakeLock = null;
+
+        // Update time display
+        function updateTime() {
+            const now = new Date();
+            
+            // Format time (12-hour)
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Convert 0 to 12
+            const hoursStr = String(hours).padStart(2, '0');
+            
+            document.getElementById('time').textContent = `${hoursStr}:${minutes}:${seconds} ${ampm}`;
+            
+            // Format date
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Request wake lock
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    updateWakeLockStatus(true);
+                    
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock released');
+                        updateWakeLockStatus(false);
+                    });
+                    
+                    console.log('Wake Lock acquired');
+                } else {
+                    console.warn('Wake Lock API not supported');
+                    document.getElementById('wakeLockStatus').textContent = 'Wake Lock: Not Supported';
+                }
+            } catch (err) {
+                console.error('Wake Lock error:', err);
+                updateWakeLockStatus(false);
+            }
+        }
+
+        // Update wake lock status display
+        function updateWakeLockStatus(active) {
+            const statusEl = document.getElementById('wakeLockStatus');
+            if (active) {
+                statusEl.textContent = 'Wake Lock: Active';
+                statusEl.className = 'wake-lock-status active';
+            } else {
+                statusEl.textContent = 'Wake Lock: Inactive';
+                statusEl.className = 'wake-lock-status inactive';
+            }
+        }
+
+        // Re-request wake lock when page becomes visible
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+
+        // Initialize
+        updateTime();
+        setInterval(updateTime, 1000);
+        requestWakeLock();
+    </script>
+</body>
+</html>
