@@ -1,5 +1,6 @@
 ## Klock
-- Simple HTML clock for Eastern Standard Time (EST)
+- Simple HTML clock
+- Date and time from computer
 - HH:MM:SS
 - Date
 - Can be used with a Windows Kiosk account
