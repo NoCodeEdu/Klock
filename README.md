@@ -4,3 +4,5 @@
 - HH:MM:SS
 - Date
 - Can be used with a Windows Kiosk account
+
+Example: https://nocodeedu.github.io/Klock/Klock_1.0.html
